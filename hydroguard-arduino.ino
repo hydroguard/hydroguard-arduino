@@ -17,6 +17,22 @@
 #define PH4502C_READING_COUNT 10
 #define ADC_RESOLUTION 4096.0f
 
+#define TRS_LEFT_PIN 12
+#define TRS_RIGHT_PIN 13
+
+// Read data from TRS cable
+// float read_trs_data(int pin) {
+//   float data = 0.0f;
+//   for (int i = 0; i < 10; i++) {
+//     data += analogRead(pin);
+//   }
+//   return data / 10.0f;
+// }
+
+float read_trs_data(int pin) {
+  return analogRead(pin);
+}
+
 SSD1306Wire display(OLED_ADDR, I2C_SDA, I2C_SCL);
 Adafruit_BMP280 bmp;
 PH4502C_Sensor ph4502c(
@@ -31,6 +47,8 @@ PH4502C_Sensor ph4502c(
 void setup() {
   initBoard();
 
+
+  Serial.begin(115200);
   display.init();
   display.flipScreenVertically();
   display.setColor(WHITE);
@@ -57,13 +75,18 @@ void loop() {
   float ph = ph4502c.read_ph_level();
   float temperature_int = ph4502c.read_temp();
 
+  float left_trs = read_trs_data(TRS_LEFT_PIN);
+  float right_trs = read_trs_data(TRS_RIGHT_PIN);
+
   display.clear();
 
   display.drawString(0, 10, "Ext. Temperature: " + String(temperature) + " C");
   display.drawString(0, 20, "Ext. Pressure: " + String(pressure) + " hPa");
   display.drawString(0, 30, "Ext. Altitude: " + String(altitude) + " m");
   display.drawString(0, 40, "Internal pH: " + String(ph));
-  display.drawString(0, 50, "Internal Temperature: " + String(temperature_int) + " C");
+  // display.drawString(0, 50, "Internal Temperature: " + String(temperature_int) + " C");
+  display.drawString(0, 50, "Left TRS: " + String(left_trs) + " | Right TRS: " + String(right_trs));
+  Serial.println("Left TRS: " + String(left_trs) + " | Right TRS: " + String(right_trs));
 
 
   display.display();
