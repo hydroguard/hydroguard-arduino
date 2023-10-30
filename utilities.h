@@ -1,3 +1,4 @@
+
 #pragma once
 
 // #define LILYGO_TBeam_V0_7
@@ -6,16 +7,15 @@
 // #define LILYGO_T3_V1_3
 #define LILYGO_T3_V1_6
 // #define LILYGO_T3_V2_0
-// #define LILYGO_T3_S3_V1_0
+// #define LILYGO_T_MOTION_S76G
 
-
+// #define LILYGO_T_MOTION_S78G         //Not support
 /*
-* The default program uses 433MHz,
-* if you need to change it,
-* please open this note and change to the frequency you need to test
+* The default LMIC_Arduino uses the 868MHz configuration,
+* you need to change the frequency,
+* please go to LMIC-Arduino/src/lmic/config.h to change
 * */
-
-// #define LoRa_frequency      433.0
+// LMIC-Arduino/src/lmic/config.h
 
 
 #define UNUSE_PIN                   (0)
@@ -160,41 +160,33 @@
 #define HAS_DISPLAY
 #define HAS_SDCARD
 
-#elif defined(LILYGO_T3_S3_V1_0)
+#elif defined(LILYGO_T_MOTION_S76G)
+#define RADIO_SCLK_PIN                                  PB13
+#define RADIO_MISO_PIN                                  PB14
+#define RADIO_MOSI_PIN                                  PB15
+#define RADIO_CS_PIN                                    PB12
+#define RADIO_RST_PIN                                   PB10
 
-#define I2C_SDA                     18
-#define I2C_SCL                     17
-#define OLED_RST                    UNUSE_PIN
+#define RADIO_DIO0_PIN                                  PB11
+#define RADIO_DIO1_PIN                                  PC13
+#define RADIO_DIO2_PIN                                  PB9
+#define RADIO_DIO3_PIN                                  PB4
+#define RADIO_DIO4_PIN                                  PB3
+#define RADIO_DIO5_PIN                                  PA15
 
-#define RADIO_SCLK_PIN              5
-#define RADIO_MISO_PIN              3
-#define RADIO_MOSI_PIN              6
-#define RADIO_CS_PIN                7
-#define RADIO_DIO1_PIN              33
-#define RADIO_BUSY_PIN              34
-#define RADIO_RST_PIN               8
+#define RADIO_SWITCH_PIN                                PA1 //1:Rx, 0:Tx
 
-//!SX1276/78 module only
-#define RADIO_DIO0_PIN              9
-#define RADIO_DIO3_PIN              21
-#define RADIO_DIO4_PIN              10
-#define RADIO_DIO5_PIN              36
-//! end
+#define GPS_RST_PIN                                     PB2
+#define GPS_RX_PIN                                      PC11
+#define GPS_TX_PIN                                      PC10
+#define GPS_ENABLE_PIN                                  PC6
+#define GPS_BAUD_RATE                                   115200
+#define GPS_1PPS_PIN                                    PB5
 
-#define SDCARD_MOSI                 11
-#define SDCARD_MISO                 2
-#define SDCARD_SCLK                 14
-#define SDCARD_CS                   13
+#define UART_RX_PIN                                     PA10
+#define UART_TX_PIN                                     PA9
 
-#define BOARD_LED                   37
-#define LED_ON                      HIGH
-
-#define BAT_ADC_PIN                1
-#define BUTTON_PIN                 0
-
-#define HAS_SDCARD
-#define HAS_DISPLAY
-
+#define HAS_GPS
 
 #else
 #error "For the first use, please define the board version and model in <utilities. h>"
