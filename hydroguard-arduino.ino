@@ -4,6 +4,7 @@
 #include <Adafruit_BMP280.h>
 #include <ph4502c_sensor.h>
 
+#include "loramac.h"
 #include "boards.h"
 
 #define OLED_ADDR 0x3c
@@ -47,7 +48,6 @@ PH4502C_Sensor ph4502c(
 void setup() {
   initBoard();
 
-
   Serial.begin(115200);
   display.init();
   display.flipScreenVertically();
@@ -65,7 +65,8 @@ void setup() {
   );
 
   ph4502c.init();
-  analogReadResolution(10);
+  delay(1500);
+  setupLMIC();
 }
 
 void loop() {
@@ -91,5 +92,7 @@ void loop() {
 
   display.display();
 
+
+  loopLMIC();
   delay(500);
 }
