@@ -2,12 +2,13 @@
 
 #include <lmic.h>
 
+#include <cstdint>
 #include <hal/hal.h>
 
 #include "boards.h"
+// #include "loramac.h"
 
 #define PROGMEM
-
 #define LMIC_DEBUG_LEVEL = 1
 #define CFG_au915
 
@@ -30,56 +31,29 @@ static const u1_t PROGMEM APPSKEY[16] = {0xFE, 0x93, 0xBF, 0x1D, 0x7A, 0x50,
 // See http://thethingsnetwork.org/wiki/AddressSpace
 // The library converts the address to network byte order as needed, so this
 // should be in big-endian (aka msb) too.
-static const u4_t DEVADDR =
-    0x260D550F; // <-- Change this address for every node!
+static const u4_t DEVADDR = 0x260D550F;
 
 void loopLMIC(void) { os_runloop_once(); }
-
-
 
 // These callbacks are only used in over-the-air activation, so they are
 // left empty here (we cannot leave them out completely unless
 // DISABLE_JOIN is set in arduino-lmic/project_config/lmic_project_config.h,
 // otherwise the linker will complain).
-void os_getArtEui(u1_t *buf) {}
-void os_getDevEui(u1_t *buf) {}
-void os_getDevKey(u1_t *buf) {}
+void os_getArtEui(u1_t *buf){};
+void os_getDevEui(u1_t *buf){};
+void os_getDevKey(u1_t *buf){};
 
-void buildPacket(uint8_t txBuffer[9]) {
-
-  // temp DHT
-  txBuffer[0] = 'a';
-  txBuffer[1] = 'b';
-  txBuffer[2] = 'c';
-  txBuffer[3] = 'd';
-  txBuffer[4] = 'e';
-  txBuffer[5] = 'f';
-  txBuffer[6] = 'g';
-  txBuffer[7] = 'h';
-  txBuffer[8] = 'i';
-}
-
-uint8_t txBuffer[24];
+uint8_t txBuffer[4069];
+int txBufferLen = 0;
 void do_send(osjob_t *j) {
-  // Check if there is not a current TX/RX job running
-
-  // displayValues();
-
   if (LMIC.opmode & OP_TXRXPEND) {
     Serial.println(F("OP_TXRXPEND, not sending"));
-    // LoraStatus = "OP_TXRXPEND, not sending";
   } else {
-    buildPacket(txBuffer);
-
-    LMIC_setTxData2(1, txBuffer, sizeof(txBuffer), 0);
+    LMIC_setTxData2(1, txBuffer, sizeof(uint8_t) * txBufferLen, 0);
     Serial.println(F("Packet queued"));
-    // LoraStatus = "Packet queued";
   }
-
-  // Next TX is scheduled after TX_COMPLETE event.
 }
 
-// static uint8_t mydata[4];
 static osjob_t sendjob;
 
 const unsigned TX_INTERVAL = 15;
@@ -130,7 +104,6 @@ void onEvent(ev_t ev) {
       Serial.println(LMIC.dataLen);
       Serial.println(F(" bytes of payload"));
     }
-    // Schedule next transmission
     os_setTimedCallback(&sendjob, os_getTime() + sec2osticks(TX_INTERVAL),
                         do_send);
     break;
