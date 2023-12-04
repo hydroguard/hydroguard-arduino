@@ -20,12 +20,17 @@
 #define PH4502C_READING_COUNT 100
 #define ADC_RESOLUTION 4096.0f
 
-#define TRS_LEFT_PIN 12
-#define TRS_RIGHT_PIN 13
+#define TRS_GAS_PIN 15
 
-float read_trs_data(int pin) {
-  return analogRead(pin);
-}
+volatile unsigned long int counter = 0;
+const float averageGas = 0.1998f;
+
+unsigned long previousMillis1 = 0;
+const unsigned int interval1 = 10;  // 0.1 second
+
+unsigned long previousMillis2 = 0;
+const unsigned int interval2 = 1000;   // 1 seconds
+
 
 SSD1306Wire display(OLED_ADDR, I2C_SDA, I2C_SCL);
 Adafruit_BMP280 bmp;
@@ -57,59 +62,77 @@ void setup() {
     Adafruit_BMP280::STANDBY_MS_500
   );
 
+  pinMode(TRS_GAS_PIN, INPUT);
+  
   ph4502c.init();
   delay(1500);
   setupLMIC();
+
+  previousMillis1 = millis()+(interval1*2);
+  
 }
 
 void loop() {
-  float bmp_temperature = bmp.readTemperature();
-  float bmp_pressure = bmp.readPressure();
-  float bmp_altitude = bmp.readAltitude(1013.25);
 
-  float ph4502c_ph = ph4502c.read_ph_level();
-  float ph4502c_temperature = ph4502c.read_temp();
+  if (millis() - previousMillis1 >= interval1) {
+    previousMillis1 = millis();
+      int trs_left = analogRead(TRS_GAS_PIN); 
 
-  float trs_left = read_trs_data(TRS_LEFT_PIN);
-  float trs_right = read_trs_data(TRS_RIGHT_PIN);
+    if (trs_left==0){
+      counter++;
+    }
+  }
 
-  StaticJsonDocument<4096> payload;
+  if (millis() - previousMillis2 >= interval2) {
+    previousMillis2 = millis();
 
-  // bmp data
-  JsonObject bmp_data = payload.createNestedObject("bmp");
-  bmp_data["temperature"] = bmp_temperature;
-  bmp_data["pressure"] = bmp_pressure;
-  bmp_data["altitude"] = bmp_altitude;
+    float bmp_temperature = bmp.readTemperature();
+    float bmp_pressure = bmp.readPressure();
+    float bmp_altitude = bmp.readAltitude(1013.25);
 
-  // ph4502c data
-  JsonObject ph4502c_data = payload.createNestedObject("ph4502c");
-  ph4502c_data["ph"] = ph4502c_ph;
-  ph4502c_data["temperature"] = ph4502c_temperature;
+    float ph4502c_ph = ph4502c.read_ph_level();
+    float ph4502c_temperature = ph4502c.read_temp();
 
-  // trs data
-  JsonObject trs_data = payload.createNestedObject("trs");
-  trs_data["left"] = trs_left;
-  trs_data["right"] = trs_right;
-  
-  // NOTE: This is not safe at all and its ugly
-  txBufferLen = measureJson(payload);
-  serializeJson(payload, txBuffer, txBufferLen);
+    double trs_left = counter * averageGas;
 
-  display.clear();
+    // Reseta o contador para evitar overflow
+    if (counter >= 429000000){
+      counter = 0;
+    }
 
-  display.drawString(0, 10, "Bmp Temperature: " + String(bmp_temperature) + " C");
-  display.drawString(0, 20, "Bmp Pressure: " + String(bmp_pressure) + " Pa");
-  display.drawString(0, 30, "Bmp Altitude: " + String(bmp_altitude) + " m");
+    StaticJsonDocument<4096> payload;
 
-  display.drawString(0, 40, "Ph4502c Ph: " + String(ph4502c_ph));
-  display.drawString(0, 50, "Ph4502c Temperature: " + String(ph4502c_temperature) + " C");
+    // bmp data
+    JsonObject bmp_data = payload.createNestedObject("bmp");
+    bmp_data["temperature"] = bmp_temperature;
+    bmp_data["pressure"] = bmp_pressure;
+    bmp_data["altitude"] = bmp_altitude;
 
-  display.drawString(0, 60, "Trs Left: " + String(trs_left));
-  display.drawString(0, 70, "Trs Right: " + String(trs_right));
+    // ph4502c data
+    JsonObject ph4502c_data = payload.createNestedObject("ph4502c");
+    ph4502c_data["ph"] = ph4502c_ph;
+    ph4502c_data["temperature"] = ph4502c_temperature;
 
-  display.display();
+    // trs data
+    JsonObject trs_data = payload.createNestedObject("trs");
+    trs_data["data"] = trs_left;
+    
+    // NOTE: This is not safe at all and its ugly
+    txBufferLen = measureJson(payload);
+    serializeJson(payload, txBuffer, txBufferLen);
 
+    display.clear();
 
-  loopLMIC();
-  delay(500);
+    display.drawString(0, 10, "Bmp Temperature: " + String(bmp_temperature) + "ºC");
+    display.drawString(0, 20, "Bmp Pressure: " + String(bmp_pressure) + " Pa");
+    display.drawString(0, 30, "Bmp Altitude: " + String(bmp_altitude) + " m");
+
+    display.drawString(0, 40, "Ph4502c Ph: " + String(ph4502c_ph));
+
+    display.drawString(0, 50, "Trs Left: " + String(trs_left,5));
+
+    display.display();
+
+    loopLMIC();
+  }
 }

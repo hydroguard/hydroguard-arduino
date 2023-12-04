@@ -389,5 +389,3 @@ void initBoard()
     }
 #endif
 }
-
-

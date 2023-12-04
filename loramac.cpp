@@ -56,7 +56,7 @@ void do_send(osjob_t *j) {
 
 static osjob_t sendjob;
 
-const unsigned TX_INTERVAL = 15;
+const unsigned TX_INTERVAL = 900;
 
 const lmic_pinmap lmic_pins = {
     .nss = RADIO_CS_PIN,
